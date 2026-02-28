@@ -1,32 +1,70 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import Link from "next/link"
-import { Minus, Plus, X, ShoppingBag, ArrowRight } from "lucide-react"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { cartItems as initialCartItems, formatPrice } from "@/lib/data"
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Minus, Plus, X, ShoppingBag, ArrowRight } from 'lucide-react'
+import { Navbar } from '@/components/navbar'
+import { Footer } from '@/components/footer'
+import { getCart, updateCartItem, clearCart } from '@/app/actions/cart'
+import { getUser } from '@/app/actions/auth'
+
+function formatPrice(price: number | string) {
+  return `Rs. ${Number(price).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+}
 
 export default function CartPage() {
-  const [items, setItems] = useState(initialCartItems)
+  const router = useRouter()
+  const [items, setItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
 
-  const updateQuantity = (id: number, delta: number) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
-    )
+  useEffect(() => {
+    const init = async () => {
+      const currentUser = await getUser()
+      setUser(currentUser)
+
+      if (!currentUser) {
+        router.push('/login')
+        return
+      }
+
+      const { items: cartItems } = await getCart()
+      setItems(cartItems)
+      setLoading(false)
+    }
+
+    init()
+  }, [router])
+
+  const handleQuantityChange = async (cartItemId: string, newQuantity: number) => {
+    if (newQuantity < 1) return
+    await updateCartItem(cartItemId, newQuantity)
+    const { items: updatedItems } = await getCart()
+    setItems(updatedItems)
   }
 
-  const removeItem = (id: number) => {
-    setItems((prev) => prev.filter((item) => item.id !== id))
+  const handleRemoveItem = async (cartItemId: string) => {
+    await updateCartItem(cartItemId, 0)
+    const { items: updatedItems } = await getCart()
+    setItems(updatedItems)
   }
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const subtotal = items.reduce((sum, item) => sum + (item.products?.price || 0) * item.quantity, 0)
   const shipping = subtotal > 5000 ? 0 : 350
   const total = subtotal + shipping
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <p className="text-muted-foreground">Loading your cart...</p>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   if (items.length === 0) {
     return (
@@ -35,12 +73,8 @@ export default function CartPage() {
         <main className="flex-1 flex items-center justify-center px-4">
           <div className="text-center">
             <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground/40 mb-6" />
-            <h1 className="font-serif text-2xl font-bold text-foreground mb-2">
-              Your Cart is Empty
-            </h1>
-            <p className="text-muted-foreground mb-8">
-              Looks like you have not added anything yet.
-            </p>
+            <h1 className="font-serif text-2xl font-bold text-foreground mb-2">Your Cart is Empty</h1>
+            <p className="text-muted-foreground mb-8">Looks like you have not added anything yet.</p>
             <Link
               href="/shop"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
@@ -62,9 +96,7 @@ export default function CartPage() {
         <div className="bg-secondary py-8 px-4 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <p className="text-xs text-muted-foreground mb-2">Home / Cart</p>
-            <h1 className="font-serif text-3xl lg:text-4xl font-bold text-foreground">
-              Shopping Cart
-            </h1>
+            <h1 className="font-serif text-3xl lg:text-4xl font-bold text-foreground">Shopping Cart</h1>
           </div>
         </div>
 
@@ -86,41 +118,42 @@ export default function CartPage() {
                   <div
                     key={item.id}
                     className={`p-4 lg:grid lg:grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 items-center flex flex-col sm:flex-row sm:items-center ${
-                      i > 0 ? "border-t border-border" : ""
+                      i > 0 ? 'border-t border-border' : ''
                     }`}
                   >
                     {/* Product */}
                     <div className="flex items-center gap-4 w-full sm:w-auto">
                       <div className="h-20 w-20 shrink-0 rounded-xl overflow-hidden bg-secondary">
                         <img
-                          src={item.image}
-                          alt={item.name}
+                          src={item.products?.image_url || '/placeholder.jpg'}
+                          alt={item.products?.name}
                           className="h-full w-full object-cover"
                           crossOrigin="anonymous"
                         />
                       </div>
                       <div>
                         <Link
-                          href={`/product/${item.id}`}
+                          href={`/product/${item.products?.id}`}
                           className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
                         >
-                          {item.name}
+                          {item.products?.name}
                         </Link>
-                        <p className="text-xs text-muted-foreground mt-0.5">{item.category}</p>
                       </div>
                     </div>
 
                     {/* Price */}
                     <div className="text-center">
                       <span className="lg:hidden text-xs text-muted-foreground mr-2">Price:</span>
-                      <span className="text-sm font-medium text-foreground">{formatPrice(item.price)}</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {formatPrice(item.products?.price)}
+                      </span>
                     </div>
 
                     {/* Quantity */}
                     <div className="flex items-center justify-center">
                       <div className="flex items-center border border-border rounded-xl overflow-hidden">
                         <button
-                          onClick={() => updateQuantity(item.id, -1)}
+                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                           className="p-2 hover:bg-accent transition-colors"
                           aria-label="Decrease quantity"
                         >
@@ -128,7 +161,7 @@ export default function CartPage() {
                         </button>
                         <span className="px-4 text-sm font-semibold text-foreground">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, 1)}
+                          onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                           className="p-2 hover:bg-accent transition-colors"
                           aria-label="Increase quantity"
                         >
@@ -141,67 +174,57 @@ export default function CartPage() {
                     <div className="text-center">
                       <span className="lg:hidden text-xs text-muted-foreground mr-2">Subtotal:</span>
                       <span className="text-sm font-bold text-foreground">
-                        {formatPrice(item.price * item.quantity)}
+                        {formatPrice((item.products?.price || 0) * item.quantity)}
                       </span>
                     </div>
 
                     {/* Remove */}
                     <button
-                      onClick={() => removeItem(item.id)}
-                      className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                      aria-label={`Remove ${item.name}`}
+                      onClick={() => handleRemoveItem(item.id)}
+                      className="p-2 hover:bg-red-50 rounded-lg transition-colors text-muted-foreground hover:text-red-600 lg:mx-auto"
+                      aria-label="Remove item"
                     >
                       <X className="h-4 w-4" />
                     </button>
                   </div>
                 ))}
               </div>
-
-              <Link
-                href="/shop"
-                className="inline-flex items-center gap-2 mt-6 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-              >
-                <ArrowRight className="h-4 w-4 rotate-180" />
-                Continue Shopping
-              </Link>
             </div>
 
             {/* Order Summary */}
-            <div className="lg:w-80 shrink-0">
-              <div className="bg-card rounded-2xl border border-border p-6 sticky top-28">
+            <aside className="lg:w-96 shrink-0">
+              <div className="bg-card rounded-2xl border border-border p-6 lg:p-8 sticky top-28 h-fit">
                 <h2 className="text-lg font-semibold text-foreground mb-6">Order Summary</h2>
-                <div className="flex flex-col gap-3 pb-6 border-b border-border">
+                <div className="flex flex-col gap-4 mb-6">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Items ({items.reduce((s, i) => s + i.quantity, 0)})
-                    </span>
+                    <span className="text-muted-foreground">Subtotal</span>
                     <span className="font-medium text-foreground">{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Shipping</span>
                     <span className="font-medium text-foreground">
-                      {shipping === 0 ? "Free" : formatPrice(shipping)}
+                      {shipping === 0 ? 'Free' : formatPrice(shipping)}
                     </span>
                   </div>
-                </div>
-                <div className="flex items-center justify-between pt-6 mb-6">
-                  <span className="text-base font-semibold text-foreground">Total</span>
-                  <span className="text-xl font-bold text-foreground">{formatPrice(total)}</span>
+                  <div className="border-t border-border pt-4 flex items-center justify-between">
+                    <span className="text-base font-semibold text-foreground">Total</span>
+                    <span className="text-xl font-bold text-primary">{formatPrice(total)}</span>
+                  </div>
                 </div>
                 <Link
                   href="/checkout"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-xl py-3.5 text-sm font-semibold hover:bg-primary/90 transition-colors"
+                  className="w-full bg-primary text-primary-foreground rounded-xl py-3.5 text-sm font-semibold hover:bg-primary/90 transition-colors text-center block"
                 >
                   Proceed to Checkout
-                  <ArrowRight className="h-4 w-4" />
                 </Link>
-                {subtotal < 5000 && (
-                  <p className="text-xs text-muted-foreground text-center mt-4">
-                    Add {formatPrice(5000 - subtotal)} more for free shipping
-                  </p>
-                )}
+                <Link
+                  href="/shop"
+                  className="w-full mt-3 bg-accent text-foreground rounded-xl py-3.5 text-sm font-semibold hover:bg-accent/80 transition-colors text-center block"
+                >
+                  Continue Shopping
+                </Link>
               </div>
-            </div>
+            </aside>
           </div>
         </div>
       </main>

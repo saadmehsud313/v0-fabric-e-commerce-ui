@@ -1,43 +1,97 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import Link from "next/link"
-import {
-  LayoutDashboard,
-  Package,
-  UserCircle,
-  LogOut,
-  ChevronRight,
-  Menu,
-  X,
-} from "lucide-react"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { orders, formatPrice } from "@/lib/data"
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { LayoutDashboard, Package, UserCircle, LogOut, ChevronRight, Menu, X, Clock, CheckCircle, Truck } from 'lucide-react'
+import { Navbar } from '@/components/navbar'
+import { Footer } from '@/components/footer'
+import { getUser, getUserProfile, signOut } from '@/app/actions/auth'
+import { getOrders } from '@/app/actions/orders'
 
-const sidebarLinks = [
-  { label: "Dashboard", icon: LayoutDashboard, active: true },
-  { label: "My Orders", icon: Package, active: false },
-  { label: "Profile", icon: UserCircle, active: false },
-  { label: "Logout", icon: LogOut, active: false },
-]
+function formatPrice(price: number | string) {
+  return `Rs. ${Number(price).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+}
 
 function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    Delivered: "bg-green-100 text-green-800",
-    Processing: "bg-yellow-100 text-yellow-800",
-    Shipped: "bg-blue-100 text-blue-800",
-    Pending: "bg-orange-100 text-orange-800",
+  const icons: Record<string, any> = {
+    pending: Clock,
+    processing: Package,
+    shipped: Truck,
+    delivered: CheckCircle,
   }
+
+  const colors: Record<string, string> = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    processing: 'bg-blue-100 text-blue-800',
+    shipped: 'bg-purple-100 text-purple-800',
+    delivered: 'bg-green-100 text-green-800',
+  }
+
+  const statusKey = status?.toLowerCase() || 'pending'
+  const Icon = icons[statusKey] || Package
+  const colorClass = colors[statusKey] || 'bg-secondary text-secondary-foreground'
+
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold ${colors[status] || "bg-secondary text-secondary-foreground"}`}>
-      {status}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-semibold ${colorClass}`}>
+      <Icon className="h-3 w-3" />
+      {status || 'Pending'}
     </span>
   )
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<'orders' | 'profile'>('orders')
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
+  const [orders, setOrders] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const init = async () => {
+      const currentUser = await getUser()
+      if (!currentUser) {
+        router.push('/login')
+        return
+      }
+
+      setUser(currentUser)
+
+      const userProfile = await getUserProfile()
+      setProfile(userProfile)
+
+      const { orders: userOrders } = await getOrders()
+      setOrders(userOrders || [])
+
+      setLoading(false)
+    }
+
+    init()
+  }, [router])
+
+  const handleLogout = async () => {
+    await signOut()
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  const sidebarLinks = [
+    { label: 'My Orders', id: 'orders', icon: Package, active: activeTab === 'orders' },
+    { label: 'Profile', id: 'profile', icon: UserCircle, active: activeTab === 'profile' },
+    { label: 'Logout', id: 'logout', icon: LogOut, active: false },
+  ]
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -46,9 +100,7 @@ export default function DashboardPage() {
         <div className="bg-secondary py-8 px-4 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <p className="text-xs text-muted-foreground mb-2">Home / Dashboard</p>
-            <h1 className="font-serif text-3xl lg:text-4xl font-bold text-foreground">
-              My Account
-            </h1>
+            <h1 className="font-serif text-3xl lg:text-4xl font-bold text-foreground">My Account</h1>
           </div>
         </div>
 
@@ -59,17 +111,26 @@ export default function DashboardPage() {
               <nav className="bg-card rounded-2xl border border-border p-4 sticky top-28">
                 <ul className="flex flex-col gap-1">
                   {sidebarLinks.map((link) => (
-                    <li key={link.label}>
-                      <button
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                          link.active
-                            ? "bg-primary text-primary-foreground"
-                            : "text-foreground/70 hover:text-foreground hover:bg-accent"
-                        }`}
-                      >
-                        <link.icon className="h-4 w-4" />
-                        {link.label}
-                      </button>
+                    <li key={link.id}>
+                      {link.id === 'logout' ? (
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <link.icon className="h-4 w-4" />
+                          {link.label}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setActiveTab(link.id as 'orders' | 'profile')}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                            link.active ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:text-foreground hover:bg-accent'
+                          }`}
+                        >
+                          <link.icon className="h-4 w-4" />
+                          {link.label}
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -97,18 +158,30 @@ export default function DashboardPage() {
                   </div>
                   <ul className="flex flex-col gap-1">
                     {sidebarLinks.map((link) => (
-                      <li key={link.label}>
-                        <button
-                          onClick={() => setSidebarOpen(false)}
-                          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                            link.active
-                              ? "bg-primary text-primary-foreground"
-                              : "text-foreground/70 hover:text-foreground hover:bg-accent"
-                          }`}
-                        >
-                          <link.icon className="h-4 w-4" />
-                          {link.label}
-                        </button>
+                      <li key={link.id}>
+                        {link.id === 'logout' ? (
+                          <button
+                            onClick={() => {
+                              setSidebarOpen(false)
+                              handleLogout()
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <link.icon className="h-4 w-4" />
+                            {link.label}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setActiveTab(link.id as 'orders' | 'profile')
+                              setSidebarOpen(false)
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors text-foreground/70 hover:text-foreground hover:bg-accent"
+                          >
+                            <link.icon className="h-4 w-4" />
+                            {link.label}
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -118,69 +191,118 @@ export default function DashboardPage() {
 
             {/* Main Content */}
             <div className="flex-1">
-              {/* Welcome */}
-              <div className="bg-card rounded-2xl border border-border p-6 lg:p-8 mb-6">
-                <h2 className="font-serif text-xl font-bold text-foreground mb-2">
-                  Welcome back, Aisha!
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Manage your orders, update your profile, and explore your kashfdigitex account.
-                </p>
-              </div>
-
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <div className="bg-card rounded-2xl border border-border p-6">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Orders</p>
-                  <p className="text-2xl font-bold text-foreground">{orders.length}</p>
-                </div>
-                <div className="bg-card rounded-2xl border border-border p-6">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Spent</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {formatPrice(orders.reduce((s, o) => s + o.total, 0))}
-                  </p>
-                </div>
-                <div className="bg-card rounded-2xl border border-border p-6">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Pending</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {orders.filter((o) => o.status !== "Delivered").length}
-                  </p>
-                </div>
-              </div>
-
-              {/* Recent Orders */}
-              <div className="bg-card rounded-2xl border border-border overflow-hidden">
-                <div className="flex items-center justify-between p-6 pb-4">
-                  <h3 className="text-base font-semibold text-foreground">Recent Orders</h3>
-                  <Link href="#" className="text-xs text-primary font-medium hover:text-primary/80 transition-colors flex items-center gap-1">
-                    View All <ChevronRight className="h-3 w-3" />
-                  </Link>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-secondary text-xs text-muted-foreground uppercase tracking-wider">
-                        <th className="text-left px-6 py-3 font-semibold">Order ID</th>
-                        <th className="text-left px-6 py-3 font-semibold">Date</th>
-                        <th className="text-left px-6 py-3 font-semibold">Status</th>
-                        <th className="text-left px-6 py-3 font-semibold">Items</th>
-                        <th className="text-right px-6 py-3 font-semibold">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+              {activeTab === 'orders' && (
+                <div>
+                  <h2 className="text-2xl font-semibold text-foreground mb-6">My Orders</h2>
+                  {orders.length === 0 ? (
+                    <div className="bg-card rounded-2xl border border-border p-12 text-center">
+                      <Package className="h-12 w-12 mx-auto text-muted-foreground/40 mb-4" />
+                      <p className="text-muted-foreground mb-4">You haven't placed any orders yet.</p>
+                      <Link
+                        href="/shop"
+                        className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
+                      >
+                        Start Shopping
+                        <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
                       {orders.map((order) => (
-                        <tr key={order.id} className="border-t border-border hover:bg-accent/50 transition-colors">
-                          <td className="px-6 py-4 font-medium text-foreground">{order.id}</td>
-                          <td className="px-6 py-4 text-muted-foreground">{order.date}</td>
-                          <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
-                          <td className="px-6 py-4 text-muted-foreground">{order.items}</td>
-                          <td className="px-6 py-4 text-right font-semibold text-foreground">{formatPrice(order.total)}</td>
-                        </tr>
+                        <Link
+                          key={order.id}
+                          href={`/order-confirmation/${order.id}`}
+                          className="block bg-card rounded-2xl border border-border p-6 hover:border-primary/50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Order ID</p>
+                              <p className="font-mono text-sm font-semibold text-foreground">{order.id}</p>
+                            </div>
+                            <StatusBadge status={order.status} />
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Date</p>
+                              <p className="text-sm font-semibold text-foreground">
+                                {new Date(order.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Items</p>
+                              <p className="text-sm font-semibold text-foreground">
+                                {order.order_items?.length || 0} item{order.order_items?.length !== 1 ? 's' : ''}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Total</p>
+                              <p className="text-sm font-bold text-primary">{formatPrice(order.total_amount)}</p>
+                            </div>
+                            <div className="text-right">
+                              <ChevronRight className="h-5 w-5 text-muted-foreground ml-auto" />
+                            </div>
+                          </div>
+                        </Link>
                       ))}
-                    </tbody>
-                  </table>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
+
+              {activeTab === 'profile' && (
+                <div>
+                  <h2 className="text-2xl font-semibold text-foreground mb-6">Profile Information</h2>
+                  <div className="bg-card rounded-2xl border border-border p-8 max-w-2xl">
+                    <div className="space-y-6">
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Email Address
+                        </label>
+                        <p className="text-sm font-semibold text-foreground mt-2">{user?.email}</p>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Full Name
+                        </label>
+                        <p className="text-sm font-semibold text-foreground mt-2">
+                          {profile?.full_name || 'Not set'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Phone
+                        </label>
+                        <p className="text-sm font-semibold text-foreground mt-2">
+                          {profile?.phone || 'Not set'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Address
+                        </label>
+                        <p className="text-sm font-semibold text-foreground mt-2">
+                          {profile?.address || 'Not set'}
+                        </p>
+                      </div>
+
+                      <div className="pt-6 border-t border-border">
+                        <p className="text-xs text-muted-foreground mb-4">
+                          Account created on {new Date(user?.created_at).toLocaleDateString()}
+                        </p>
+                        <button
+                          onClick={handleLogout}
+                          className="text-sm font-semibold text-red-600 hover:text-red-700 transition-colors"
+                        >
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,12 +1,35 @@
-"use client"
+'use client'
 
-import Link from "next/link"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Navbar } from '@/components/navbar'
+import { Footer } from '@/components/footer'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import { signIn } from '@/app/actions/auth'
 
 export default function LoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    const result = await signIn(email, password)
+
+    if (!result.success) {
+      setError(result.error || 'Failed to sign in')
+      setLoading(false)
+    }
+    // If successful, signIn will redirect
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -18,20 +41,33 @@ export default function LoginPage() {
               <p className="text-sm text-muted-foreground">Sign in to your kashfdigitex account</p>
             </div>
 
-            <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5">
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="email" className="text-sm font-medium text-foreground">Email Address</Label>
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                  Email Address
+                </Label>
                 <input
                   id="email"
                   type="email"
                   placeholder="aisha@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                   className="bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium text-foreground">Password</Label>
+                  <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                    Password
+                  </Label>
                   <Link href="#" className="text-xs text-primary hover:text-primary/80 transition-colors">
                     Forgot password?
                   </Link>
@@ -40,6 +76,9 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                   className="bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
@@ -53,9 +92,10 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="w-full bg-primary text-primary-foreground rounded-xl py-3.5 text-sm font-semibold hover:bg-primary/90 transition-colors"
+                disabled={loading}
+                className="w-full bg-primary text-primary-foreground rounded-xl py-3.5 text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign In
+                {loading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
 

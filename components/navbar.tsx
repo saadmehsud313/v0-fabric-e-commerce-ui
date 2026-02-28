@@ -11,6 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { AuthUserMenu } from "@/components/auth-user-menu"
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -120,13 +121,7 @@ export function Navbar() {
           </Link>
 
           {/* User */}
-          <Link
-            href="/login"
-            className="hidden sm:flex p-2 rounded-full hover:bg-accent transition-colors"
-            aria-label="Account"
-          >
-            <User className="h-5 w-5 text-foreground/70" />
-          </Link>
+          <AuthUserMenu />
 
           {/* Mobile Menu */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
