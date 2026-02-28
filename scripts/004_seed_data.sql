@@ -1,0 +1,36 @@
+-- Seed categories
+INSERT INTO public.categories (name, slug, image_url, description) VALUES
+  ('Lawn', 'lawn', 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&h=400&fit=crop', 'Light and breezy lawn fabrics perfect for summer'),
+  ('Cotton', 'cotton', 'https://images.unsplash.com/photo-1606722590583-6951b5ea92ad?w=600&h=400&fit=crop', 'Premium quality cotton for everyday comfort'),
+  ('Silk', 'silk', 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&h=400&fit=crop', 'Luxurious silk fabrics for special occasions'),
+  ('Khaddar', 'khaddar', 'https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=600&h=400&fit=crop', 'Traditional handwoven khaddar fabrics')
+ON CONFLICT (slug) DO NOTHING;
+
+-- Seed products
+INSERT INTO public.products (name, slug, description, price, original_price, image_url, category_id, fabric, fabric_type, is_featured, is_new_arrival, rating, review_count, stock, in_stock, details, badge, pieces, weight)
+SELECT
+  p.name, p.slug, p.description, p.price, p.original_price, p.image_url,
+  c.id, p.fabric_type, p.fabric_type, p.is_featured, p.is_new_arrival, p.rating, p.review_count, p.stock, p.stock > 0, p.details,
+  CASE WHEN p.original_price IS NOT NULL THEN 'Sale' WHEN p.is_new_arrival THEN 'New' ELSE NULL END,
+  p.pieces, p.weight
+FROM (VALUES
+  ('Summer Breeze Lawn', 'summer-breeze-lawn', 'Lightweight lawn fabric with elegant floral prints. Perfect for casual summer wear with breathable comfort.', 2850, 3500, 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=400&h=500&fit=crop', 'lawn', 'Lawn', true, false, 4.5, 23, 45, '{"weight": "Light", "width": "45 inches", "care": "Machine wash cold", "composition": "100% Lawn Cotton"}'::jsonb, '3 Piece (Shirt, Trouser, Dupatta)', '1.2 kg'),
+  ('Royal Cotton Suit', 'royal-cotton-suit', 'Premium unstitched cotton suit with embroidered neckline and border. Comes with matching dupatta.', 4200, NULL, 'https://images.unsplash.com/photo-1606722590583-6951b5ea92ad?w=400&h=500&fit=crop', 'cotton', 'Cotton', true, false, 4.8, 45, 30, '{"weight": "Medium", "width": "44 inches", "care": "Hand wash recommended", "composition": "100% Premium Cotton"}'::jsonb, 'Unstitched (3.5 meters)', '0.8 kg'),
+  ('Pure Silk Elegance', 'pure-silk-elegance', 'Handwoven pure silk fabric with intricate traditional patterns. Ideal for formal occasions and weddings.', 8500, 9800, 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=500&fit=crop', 'silk', 'Silk', true, false, 4.9, 67, 15, '{"weight": "Light", "width": "46 inches", "care": "Dry clean only", "composition": "100% Pure Silk"}'::jsonb, '1 Piece (Dupatta)', '0.3 kg'),
+  ('Khaddar Winter Collection', 'khaddar-winter-collection', 'Warm and cozy khaddar fabric with modern design patterns. Perfect for winter season fashion.', 3200, 3800, 'https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=400&h=500&fit=crop', 'khaddar', 'Khaddar', true, false, 4.3, 31, 60, '{"weight": "Heavy", "width": "44 inches", "care": "Machine wash warm", "composition": "100% Khaddar Cotton"}'::jsonb, 'Unstitched (4 meters)', '1.0 kg'),
+  ('Embroidered Lawn Premium', 'embroidered-lawn-premium', 'Luxury embroidered lawn with delicate thread work and premium finish for special occasions.', 5500, 6200, 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=400&h=500&fit=crop', 'lawn', 'Lawn', true, true, 4.7, 18, 25, '{"weight": "Light", "width": "45 inches", "care": "Hand wash cold", "composition": "100% Premium Lawn"}'::jsonb, '3 Piece (Shirt, Trouser, Dupatta)', '1.1 kg'),
+  ('Digital Print Cotton', 'digital-print-cotton', 'Modern digital print cotton fabric with contemporary abstract designs and vibrant colors.', 3100, NULL, 'https://images.unsplash.com/photo-1606722590583-6951b5ea92ad?w=400&h=500&fit=crop', 'cotton', 'Cotton', true, true, 4.4, 12, 55, '{"weight": "Medium", "width": "44 inches", "care": "Machine wash cold", "composition": "100% Cotton"}'::jsonb, 'Unstitched (3.5 meters)', '0.9 kg'),
+  ('Banarsi Silk Special', 'banarsi-silk-special', 'Traditional Banarsi silk with gold and silver thread work, perfect for wedding trousseau.', 12000, 14500, 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=500&fit=crop', 'silk', 'Silk', false, true, 5.0, 89, 8, '{"weight": "Medium", "width": "46 inches", "care": "Dry clean only", "composition": "Pure Banarsi Silk"}'::jsonb, '3 Piece (Shirt, Trouser, Dupatta)', '1.3 kg'),
+  ('Classic Khaddar Plain', 'classic-khaddar-plain', 'Traditional handwoven khaddar in solid colors. Versatile and timeless for everyday wear.', 1800, 2200, 'https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=400&h=500&fit=crop', 'khaddar', 'Khaddar', false, true, 4.1, 56, 80, '{"weight": "Heavy", "width": "42 inches", "care": "Machine wash warm", "composition": "100% Handwoven Khaddar"}'::jsonb, 'Unstitched (4 meters)', '1.0 kg'),
+  ('Floral Garden Lawn', 'floral-garden-lawn', 'Vibrant floral printed lawn fabric with a soft texture. Great for spring and summer collections.', 2400, NULL, 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=400&h=500&fit=crop', 'lawn', 'Lawn', false, false, 4.2, 34, 40, '{"weight": "Light", "width": "45 inches", "care": "Machine wash cold", "composition": "100% Lawn"}'::jsonb, '3 Piece (Shirt, Trouser, Dupatta)', '1.2 kg'),
+  ('Premium Linen Cotton', 'premium-linen-cotton', 'High-quality linen-cotton blend for a sophisticated look. Wrinkle-resistant and comfortable.', 3800, 4200, 'https://images.unsplash.com/photo-1606722590583-6951b5ea92ad?w=400&h=500&fit=crop', 'cotton', 'Cotton', false, false, 4.6, 41, 35, '{"weight": "Medium", "width": "44 inches", "care": "Machine wash cold", "composition": "60% Cotton, 40% Linen"}'::jsonb, 'Unstitched (3.5 meters)', '0.8 kg'),
+  ('Chiffon Silk Dupatta', 'chiffon-silk-dupatta', 'Elegant chiffon silk dupatta with hand-embroidered borders. The perfect finishing touch for any outfit.', 4800, NULL, 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=500&fit=crop', 'silk', 'Silk', false, false, 4.8, 27, 20, '{"weight": "Ultra Light", "width": "40 inches", "care": "Dry clean recommended", "composition": "Pure Chiffon Silk"}'::jsonb, '1 Piece (Dupatta)', '0.3 kg'),
+  ('Winter Khaddar Printed', 'winter-khaddar-printed', 'Printed khaddar with modern geometric patterns. Warm and stylish for the winter wardrobe.', 2600, 3000, 'https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=400&h=500&fit=crop', 'khaddar', 'Khaddar', false, false, 4.0, 19, 50, '{"weight": "Heavy", "width": "44 inches", "care": "Machine wash warm", "composition": "100% Khaddar"}'::jsonb, 'Unstitched (4 meters)', '1.0 kg')
+) AS p(name, slug, description, price, original_price, image_url, category_slug, fabric_type, is_featured, is_new_arrival, rating, review_count, stock, details, pieces, weight)
+JOIN public.categories c ON c.slug = p.category_slug
+ON CONFLICT (slug) DO NOTHING;
+
+-- Update category product counts
+UPDATE public.categories SET product_count = (
+  SELECT COUNT(*) FROM public.products WHERE products.category_id = categories.id
+);
