@@ -1,22 +1,34 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { SlidersHorizontal, X, ChevronDown } from "lucide-react"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { ProductCard } from "@/components/product-card"
-import { products } from "@/lib/data"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Slider } from "@/components/ui/slider"
+import { useState } from 'react'
+import { SlidersHorizontal, X, ChevronDown } from 'lucide-react'
+import { Navbar } from '@/components/navbar'
+import { Footer } from '@/components/footer'
+import { ProductCard } from '@/components/product-card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Slider } from '@/components/ui/slider'
+import { useEffect } from 'react'
+import { getProducts } from '@/app/actions/products'
 
-const fabricTypes = ["Lawn", "Cotton", "Silk", "Khaddar"]
+const fabricTypes = ['Lawn', 'Cotton', 'Silk', 'Khaddar']
 
 export default function ShopPage() {
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [sortBy, setSortBy] = useState("newest")
+  const [sortBy, setSortBy] = useState('newest')
   const [priceRange, setPriceRange] = useState([0, 10000])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
+  const [products, setProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { products: data } = await getProducts()
+      setProducts(data)
+      setLoading(false)
+    }
+    fetchProducts()
+  }, [])
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories((prev) =>
@@ -25,15 +37,15 @@ export default function ShopPage() {
   }
 
   const filteredProducts = products.filter((p) => {
-    if (selectedCategories.length > 0 && !selectedCategories.includes(p.category)) return false
+    if (selectedCategories.length > 0 && !selectedCategories.includes(p.fabric_type)) return false
     if (p.price < priceRange[0] || p.price > priceRange[1]) return false
     return true
   })
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortBy === "low-high") return a.price - b.price
-    if (sortBy === "high-low") return b.price - a.price
-    return b.id - a.id
+    if (sortBy === 'low-high') return a.price - b.price
+    if (sortBy === 'high-low') return b.price - a.price
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
 
   const FilterContent = () => (
@@ -117,17 +129,18 @@ export default function ShopPage() {
             {/* Product Grid */}
             <div className="flex-1">
               {/* Toolbar */}
-              <div className="flex items-center justify-between mb-6">
-                <button
-                  onClick={() => setFiltersOpen(true)}
-                  className="lg:hidden inline-flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent transition-colors"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  Filters
-                </button>
-                <p className="hidden lg:block text-sm text-muted-foreground">
-                  {sortedProducts.length} products found
-                </p>
+              {!loading && (
+                <div className="flex items-center justify-between mb-6">
+                  <button
+                    onClick={() => setFiltersOpen(true)}
+                    className="lg:hidden inline-flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Filters
+                  </button>
+                  <p className="hidden lg:block text-sm text-muted-foreground">
+                    {sortedProducts.length} products found
+                  </p>
                 <div className="relative">
                   <select
                     value={sortBy}
@@ -140,22 +153,31 @@ export default function ShopPage() {
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 </div>
-              </div>
+                </div>
+              )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {sortedProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
-                ))}
-              </div>
+              {loading && (
+                <div className="text-center py-20">
+                  <p className="text-muted-foreground">Loading products...</p>
+                </div>
+              )}
 
-              {sortedProducts.length === 0 && (
+              {!loading && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {sortedProducts.map((product) => (
+                    <ProductCard key={product.id} {...product} />
+                  ))}
+                </div>
+              )}
+
+              {!loading && sortedProducts.length === 0 && (
                 <div className="text-center py-20">
                   <p className="text-muted-foreground">No products match your filters.</p>
                 </div>
               )}
 
               {/* Pagination */}
-              {sortedProducts.length > 0 && (
+              {!loading && sortedProducts.length > 0 && (
                 <div className="flex items-center justify-center gap-2 mt-12">
                   {[1, 2, 3].map((page) => (
                     <button
@@ -171,6 +193,7 @@ export default function ShopPage() {
                     </button>
                   ))}
                 </div>
+              )}
               )}
             </div>
           </div>

@@ -1,8 +1,3 @@
--- Drop existing tables and functions
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_user();
-DROP TABLE IF EXISTS public.profiles CASCADE;
-
 -- Create profiles table
 CREATE TABLE public.profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
