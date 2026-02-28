@@ -14,7 +14,7 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: 'Fabric House - Premium Pakistani Fabrics',
+  title: 'kashfdigitex | Premium Fabric Store',
   description: 'Discover exquisite Pakistani fabrics. Premium Lawn, Cotton, Silk & Khaddar collections for every occasion.',
   icons: {
     icon: [

@@ -14,7 +14,7 @@ export default function RegisterPage() {
           <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
             <div className="text-center mb-8">
               <h1 className="font-serif text-2xl font-bold text-foreground mb-2">Create Account</h1>
-              <p className="text-sm text-muted-foreground">Join Fabric House for an exclusive shopping experience</p>
+              <p className="text-sm text-muted-foreground">Join kashfdigitex for an exclusive shopping experience</p>
             </div>
 
             <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5">
