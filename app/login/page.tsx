@@ -15,7 +15,7 @@ export default function LoginPage() {
           <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
             <div className="text-center mb-8">
               <h1 className="font-serif text-2xl font-bold text-foreground mb-2">Welcome Back</h1>
-              <p className="text-sm text-muted-foreground">Sign in to your Fabric House account</p>
+              <p className="text-sm text-muted-foreground">Sign in to your kashfdigitex account</p>
             </div>
 
             <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5">

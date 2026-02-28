@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Fabric House - Premium Pakistani Fabric Brand */
+  /* kashfdigitex - Premium Pakistani Fabric Brand */
   /* Palette: Cream/Beige background, Deep Maroon primary, Warm neutrals */
   --background: oklch(0.975 0.005 80);
   --foreground: oklch(0.18 0.02 30);

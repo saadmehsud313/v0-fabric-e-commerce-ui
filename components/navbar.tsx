@@ -39,8 +39,8 @@ export function Navbar() {
       <nav className="mx-auto max-w-7xl flex items-center justify-between px-4 lg:px-8 h-16 lg:h-20">
         {/* Left: Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span className="font-serif text-xl lg:text-2xl font-bold tracking-tight text-foreground">
-            Fabric House
+          <span className="font-serif text-xl lg:text-2xl font-bold tracking-wider text-foreground">
+            kashfdigitex
           </span>
         </Link>
 
@@ -140,8 +140,8 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="left" className="w-80 bg-card p-0">
               <SheetHeader className="p-6 pb-4 border-b border-border">
-                <SheetTitle className="font-serif text-xl text-foreground">
-                  Fabric House
+                <SheetTitle className="font-serif text-xl tracking-wider text-foreground">
+                  kashfdigitex
                 </SheetTitle>
               </SheetHeader>
               <div className="flex flex-col py-4">

@@ -80,8 +80,8 @@ export default function AdminDashboard() {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-sidebar text-sidebar-foreground min-h-screen">
         <div className="p-6 border-b border-sidebar-border">
-          <Link href="/" className="font-serif text-xl font-bold text-sidebar-foreground">
-            Fabric House
+          <Link href="/" className="font-serif text-xl font-bold tracking-wider text-sidebar-foreground">
+            kashfdigitex
           </Link>
           <p className="text-xs text-sidebar-foreground/50 mt-1">Admin Panel</p>
         </div>
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
           <div className="absolute inset-y-0 left-0 w-72 bg-sidebar text-sidebar-foreground p-6 animate-in slide-in-from-left duration-300">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="font-serif text-lg font-bold">Fabric House</h2>
+                <h2 className="font-serif text-lg font-bold tracking-wider">kashfdigitex</h2>
                 <p className="text-xs text-sidebar-foreground/50">Admin Panel</p>
               </div>
               <button onClick={() => setSidebarOpen(false)} className="p-1">

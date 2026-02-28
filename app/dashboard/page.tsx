@@ -124,7 +124,7 @@ export default function DashboardPage() {
                   Welcome back, Aisha!
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Manage your orders, update your profile, and explore your Fabric House account.
+                  Manage your orders, update your profile, and explore your kashfdigitex account.
                 </p>
               </div>
 
